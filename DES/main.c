@@ -58,17 +58,18 @@ void print(char *c, char *mozi, int len) {
     printf("\n");
 }
 
-void key_create2(char *inputKey){
+void SubKeyGenerate1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
     int i, j, number;
     int sum = 0;
-    char permutedChoice[64], permutedChoiceLeft[28], permutedChoiceRight[28];
+    char permutedChoice[64];
+    char tmp1, tmp2;
     
     for(i=0;i < 7;i++){
         for(j = 0;j < 8;j++){
             number = PC_1[i][j];
             permutedChoice[number] = inputKey[8 * i + j];
         }
-    }    
+    }
     for(i=0;i<64;i++){
         if(permutedChoice[i] != NULL){
             if(sum < 28){
@@ -79,8 +80,20 @@ void key_create2(char *inputKey){
             sum++;
         }
     }
+    tmp1 = permutedChoiceLeft[0];
+    tmp2 = permutedChoiceRight[0];
+    for(i=0;i<27;i++){
+        permutedChoiceLeft[i] = permutedChoiceLeft[i+1];
+        permutedChoiceRight[i] = permutedChoiceRight[i+1];
+    }
+    permutedChoiceLeft[27] = tmp1;
+    permutedChoiceRight[27] = tmp2;
+}
+
+void SubKeyGenerate2(){
     
 }
+
 
 // 鍵の生成
 void key_create(char *key, char *key1, char *key2) {

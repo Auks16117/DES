@@ -60,12 +60,23 @@ void print(char *c, char *mozi, int len) {
 
 void key_create2(char *inputKey){
     int i, j, number;
-    char permutedChoice[64];
+    int sum = 0;
+    char permutedChoice[64], permutedChoiceLeft[28], permutedChoiceRight[28];
     
     for(i=0;i < 7;i++){
         for(j = 0;j < 8;j++){
             number = PC_1[i][j];
             permutedChoice[number] = inputKey[8 * i + j];
+        }
+    }    
+    for(i=0;i<64;i++){
+        if(permutedChoice[i] != NULL){
+            if(sum < 28){
+                permutedChoiceLeft[sum] = permutedChoice[i];
+            }else{
+                permutedChoiceRight[28 - sum] = permutedChoice[i];
+            }
+            sum++;
         }
     }
     

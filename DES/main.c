@@ -80,18 +80,39 @@ void SubKeyGenerate1(char *inputKey, char *permutedChoiceLeft, char *permutedCho
             sum++;
         }
     }
-    tmp1 = permutedChoiceLeft[0];
-    tmp2 = permutedChoiceRight[0];
-    for(i=0;i<27;i++){
-        permutedChoiceLeft[i] = permutedChoiceLeft[i+1];
-        permutedChoiceRight[i] = permutedChoiceRight[i+1];
-    }
-    permutedChoiceLeft[27] = tmp1;
-    permutedChoiceRight[27] = tmp2;
 }
 
-void SubKeyGenerate2(){
+void SubKeyGenerate2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *outputRight, char *subKeyGenerate){
+    int i, j, pc_2;
+    char mozi[56];
+    char tmp1, tmp2;
     
+    
+    if(number == 1 || number == 2 || number == 9 || number == 16){
+        outputLeft[27] = inputLeft[0];
+        outputRight[27] = inputRight[0];
+        for(i=0;i<27;i++){
+            outputLeft[i] = inputLeft[i+1];
+            outputRight[i] = inputRight[i+1];
+        }
+    }else{
+        outputLeft[26] = inputLeft[0];
+        outputRight[26] = inputRight[0];
+        outputLeft[27] = inputLeft[1];
+        outputRight[27] = inputRight[1];
+        for(i=0;i<26;i++){
+            outputLeft[i] = inputLeft[i+2];
+            outputRight[i] = inputRight[i+2];
+        }
+    }
+    strcat_s(mozi, sizeof(mozi), inputLeft);
+    strcat_s(mozi, sizeof(mozi), inputRight);
+    for(i=0;i<8;i++){
+        for(j=0;j<6;j++){
+            pc_2 = PC_2[i][j] - 1;
+            subKeyGenerate[i*6+j] = mozi[pc_2];
+        }
+    }
 }
 
 

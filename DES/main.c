@@ -58,36 +58,30 @@ void print(char *c, char *mozi, int len) {
     printf("\n");
 }
 
-void SubKeyGenerate1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
-    int i, j, number;
+void PC1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
+    int i, j;
     int sum = 0;
     char permutedChoice[64];
-    char tmp1, tmp2;
     
     for(i=0;i < 7;i++){
         for(j = 0;j < 8;j++){
-            number = PC_1[i][j];
-            permutedChoice[number] = inputKey[8 * i + j];
+            permutedChoice[8 * i + j] = inputKey[PC_1[i][j] - 1];
         }
     }
     for(i=0;i<64;i++){
-        if(permutedChoice[i] != NULL){
-            if(sum < 28){
-                permutedChoiceLeft[sum] = permutedChoice[i];
-            }else{
-                permutedChoiceRight[28 - sum] = permutedChoice[i];
-            }
-            sum++;
+        if(sum < 28){
+            permutedChoiceLeft[sum] = permutedChoice[i];
+        }else{
+            permutedChoiceRight[28 - sum] = permutedChoice[i];
         }
+        sum++;
     }
 }
 
-void SubKeyGenerate2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *outputRight, char *subKeyGenerate){
-    int i, j, pc_2;
+void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *outputRight, char *subKeyGenerate){
+    int i, j;
     char mozi[56];
-    char tmp1, tmp2;
-    
-    
+        
     if(number == 1 || number == 2 || number == 9 || number == 16){
         outputLeft[27] = inputLeft[0];
         outputRight[27] = inputRight[0];
@@ -105,12 +99,13 @@ void SubKeyGenerate2(int number, char *inputLeft, char *inputRight, char *output
             outputRight[i] = inputRight[i+2];
         }
     }
-    strcat_s(mozi, sizeof(mozi), inputLeft);
-    strcat_s(mozi, sizeof(mozi), inputRight);
+    for(i=0;i<28;i++){
+        mozi[i] = inputLeft[i];
+        mozi[i + 28] = inputRight[i];
+    }
     for(i=0;i<8;i++){
         for(j=0;j<6;j++){
-            pc_2 = PC_2[i][j] - 1;
-            subKeyGenerate[i*6+j] = mozi[pc_2];
+            subKeyGenerate[i*6+j] = mozi[PC_2[i][j] - 1];
         }
     }
 }

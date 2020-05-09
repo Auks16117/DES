@@ -60,29 +60,30 @@ void print(char *c, char *mozi, int len) {
 
 void PC1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
     int i, j;
-    int sum = 0;
-    char permutedChoice[64];
+    char permutedChoice[56];
     
     for(i=0;i < 7;i++){
         for(j = 0;j < 8;j++){
             permutedChoice[8 * i + j] = inputKey[PC_1[i][j] - 1];
         }
     }
-    for(i=0;i<64;i++){
-        if(sum < 28){
-            permutedChoiceLeft[sum] = permutedChoice[i];
+    print("PC1", permutedChoice, 56);
+    for(i=0;i<56;i++){
+        if(i < 28){
+            permutedChoiceLeft[i] = permutedChoice[i];
         }else{
-            permutedChoiceRight[28 - sum] = permutedChoice[i];
+            permutedChoiceRight[i - 28] = permutedChoice[i];
         }
-        sum++;
     }
+    print("PC1 Left", permutedChoiceLeft, 28);
+    print("PC1 Right", permutedChoiceRight, 28);
 }
 
 void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *outputRight, char *subKeyGenerate){
     int i, j;
     char mozi[56];
-        
-    if(number == 1 || number == 2 || number == 9 || number == 16){
+    // 1,2,9,16番目で1シフト(i=0から始まるためそれぞれ-1にする)
+    if(number == 0 || number == 1 || number == 8 || number == 15){
         outputLeft[27] = inputLeft[0];
         outputRight[27] = inputRight[0];
         for(i=0;i<27;i++){
@@ -258,6 +259,26 @@ void xor(char *sbox_output, char *l, char *output) {
 int main(int argc, const char * argv[]) {
     // insert code here...
     int i, password;
+    char key[64];
+    char permutedChoice1Left[28], permutedChoice1Right[28];
+    char permutedChoice2Left[28], permutedChoice2Right[28];
+    
+    password = 8;
+    
+    for (i = 63; 0 <= i; i--) {
+        key[i] = password % 2;
+        password = password / 2;
+    }
+    for(i=0;i<64;i++){
+        printf("%d", key[i]);
+    }
+    PC1(key, permutedChoice1Left, permutedChoice1Right);
+    PC2(0, <#char *inputLeft#>, <#char *inputRight#>, <#char *outputLeft#>, <#char *outputRight#>, <#char *subKeyGenerate#>)
+    
+    printf("\n");
+    
+    /*
+    int i, password;
         int j = 0;
         char key[10], key1[8], key2[8], l1[4], l2[4], l3[4], r1[4], r2[4], r3[4], ip[8], p4_1[4], p4_2[4];
         char ipInverse[8], mode[4], plain_text[9], chr;
@@ -390,6 +411,6 @@ int main(int argc, const char * argv[]) {
         printf("\n");
         fclose(inputfile);
         fclose(outputfile);
-    
+     */
         return 0;
 }

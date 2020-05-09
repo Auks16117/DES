@@ -108,6 +108,17 @@ int S8[4][16] = {
     {2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11}
 };
 
+int P[8][4] = {
+    {16, 7, 20, 21},
+    {29, 12, 28, 17},
+    {1, 18, 31, 10},
+    {5, 18, 31, 10},
+    {2, 8, 24, 14},
+    {32, 27, 3, 9},
+    {19, 13, 30, 6},
+    {22, 11, 4, 25}
+};
+
 void print(char *c, char *mozi, int len) {
     int i, c_len;
     c_len = strlen(c);
@@ -206,6 +217,12 @@ void InitialPermutation(char *plainText, char *ipLeft, char *ipRight) {
     }
 }
 
+// 2進数から10進数へ変換
+void binaryDemical(char *mozi, int *suti){
+    suti[0] = mozi[0] * 2 + mozi[1];
+    suti[1] = mozi[0] * 8 + mozi[1] * 4 + mozi[2] * 2 + mozi[3];
+}
+
 // 初期配置の反対の操作(IP-1)
 void InitialPermutationInverse(char *l3, char * r3, char *ipInverse) {
     ipInverse[0] = l3[3];
@@ -226,38 +243,68 @@ void Permutation(char *sbox_output, char *p4) {
     p4[3] = sbox_output[0];
 }
 
+void function_S(char *outputExpansionPermutation, char *outputS){
+    int i, suti[2];
+    char moziS[6];
+    for(i=0;i<8;i++){
+        moziS[0] = outputExpansionPermutation[i*6];
+        moziS[1] = outputExpansionPermutation[i*6+1];
+        moziS[2] = outputExpansionPermutation[i*6+2];
+        moziS[3] = outputExpansionPermutation[i*6+3];
+        moziS[4] = outputExpansionPermutation[i*6+4];
+        moziS[5] = outputExpansionPermutation[i*6+5];
+        binaryDemical(moziS, suti);
+        
+        switch (i) {
+            case 0:
+                outputS[0] = S1[suti[0]][suti[1]];
+                break;
+            case 1:
+                outputS[1] = S2[suti[0]][suti[1]];
+                break;
+            case 2:
+                outputS[2] = S3[suti[0]][suti[1]];
+                break;
+            case 3:
+                outputS[3] = S4[suti[0]][suti[1]];
+                break;
+            case 4:
+                outputS[4] = S5[suti[0]][suti[1]];
+                break;
+            case 5:
+                outputS[5] = S6[suti[0]][suti[1]];
+            default:
+                break;
+        }
+        
+    }
+}
+
+void proccessingP(char *input, char *output){
+    int i, j;
+    for(i = 0;i < 8;i++){
+        for(j=0;j< 4;j++){
+            output[4 * i + j] = input[P[i][j] - 1];
+        }
+    }
+}
+
 // 関数F
-void function_f(char *r, char *key, char *p4, char *ipRight) {
-    int i, input_s0, input_s1;
-    char e_p[8], upper_bit[4], under_bit[4], sbox_output[4];
+void function_f(char *key, char *ipRight) {
+    int i;
     char outputExpansionPermutation[48];
+    char outputP[32], outputS[6];
 
     // 拡大転置 (E/P:Expansion Permutation)
     ExpansionPermutation(ipRight, outputExpansionPermutation);
-    print("拡大転置(E/P)", e_p, 8);
-
+    print("拡大転置(E/P)", outputExpansionPermutation, 8);
     // XORする
     for (i = 0; i < 48; i++) {
         outputExpansionPermutation[i] = outputExpansionPermutation[i] ^ key[i];
     }
     print("XOR", outputExpansionPermutation, 48);
-
-    // S0とS1に分ける
-    for (i = 3; 0 <= i; i--) {
-        upper_bit[i] = e_p[i];
-    }
-
-    for (i = 7; 4 <= i; i--) {
-        under_bit[i - 4] = e_p[i];
-    }
-
-    // S-BOX
-    input_s0 = upper_bit[0] * 8 + upper_bit[3] * 4 + upper_bit[1] * 2 + upper_bit[2];
-    input_s1 = under_bit[0] * 8 + under_bit[3] * 4 + under_bit[1] * 2 + under_bit[2];
-
-    print("Sbox", sbox_output, 4);
-    Permutation(sbox_output, p4);
-    print("転置(P4)", p4, 4);
+    function_S(outputExpansionPermutation, outputS);
+    proccessingP(outputS, outputP);
 }
 
 // XOR関数
@@ -296,140 +343,6 @@ int main(int argc, const char * argv[]) {
         
     }
     
-    /*
-    int i, password;
-        int j = 0;
-        char key[10], key1[8], key2[8], l1[4], l2[4], l3[4], r1[4], r2[4], r3[4], ip[8], p4_1[4], p4_2[4];
-        char ipInverse[8], mode[4], plain_text[9], chr;
-        FILE *inputfile = NULL;
-        FILE *outputfile = NULL;
     
-        // 引数が足りないときは終了する
-        if (argc <= 4) {
-            printf("引数が足りません\n");
-            exit(EXIT_FAILURE);
-        }
-    
-        // encかdecのどちらでもない場合終了する
-        memcpy(mode, argv[1], sizeof(argv[1]));
-        if (strcmp("enc", mode) != 0 && strcmp("dec", mode) != 0) {
-            printf("encでもdecでもありません\n");
-            exit(EXIT_FAILURE);
-        }
-    
-        // 鍵を2進数にする
-        password = atoi(argv[2]);
-        for (i = 9; 0 <= i; i--) {
-            key[i] = password % 2;
-            password = password / 2;
-        }
-    
-        // 入力用ファイルを開く
-        inputfile = fopen(argv[3], "r");
-        if (inputfile == NULL) {
-            printf("Couldn't open %s\n", argv[2]);
-            exit(EXIT_FAILURE);
-        }
-    
-        // テキストを取り出す
-        while ((chr = fgetc(inputfile)) != EOF) {
-            if (chr == '0') {
-                plain_text[j] = 0;
-            }
-            else {
-                plain_text[j] = 1;
-            }
-            j++;
-        }
-    
-        // 出力用ファイルを開く
-        outputfile = fopen(argv[4], "w");
-        if (outputfile == NULL) {
-            printf("Couldn't open %s\n", argv[3]);
-            exit(EXIT_FAILURE);
-        }
-    
-        if (strcmp("enc", mode) == 0) {
-            printf("モード: 暗号化");
-        }
-        else {
-            printf("モード: 復号化");
-        }
-        printf("\n");
-        print("入力文", plain_text, 8);
-        print("鍵", key, 10);
-        printf("\n");
-    
-        printf("-------------鍵の生成-------------\n");
-    
-        // 鍵1と鍵2を生成する
-        key_create(key, key1, key2);
-        print("K1(P8)", key1, 8);
-        print("K2(P8)", key2, 8);
-    
-    
-        if (strcmp("enc", mode) == 0) {
-            printf("\n-------------暗号化---------------\n");
-        }
-        else {
-            printf("\n-------------復号化---------------\n");
-        }
-        InitialPermutation(plain_text, ip);
-        print("初期転置(IP)", ip, 8);
-    
-        for (i = 0; i < 4; i++) {
-            l1[i] = ip[i];
-            r1[i] = ip[i + 4];
-        }
-    
-        print("L1", l1, 4);
-        print("R1", r1, 4);
-    
-        // 暗号化するとき
-        if (strcmp("enc", mode) == 0) {
-            printf("\n      *  関数F-1   *\n");
-            function_f(r1, key1, p4_1);
-            xor (p4_1, l1, r2);
-            memcpy(l2, r1, sizeof(r1));
-            print("L2", l2, 4);
-            print("R2", r2, 4);
-            printf("\n      *  関数F-2  *\n");
-            function_f(r2, key2, p4_2);
-            xor (p4_2, l2, l3);
-            memcpy(r3, r2, sizeof(r2));
-            print("L3", l3, 4);
-            print("R3", r3, 4);
-            printf("\n\n");
-            // IP-1
-            InitialPermutationInverse(l3, r3, ipInverse);
-            print("暗号文",ipInverse, 8);
-        }
-        //　復号化するとき
-        else {
-            printf("\n      *  関数F-1  *\n");
-            function_f(r1, key2, p4_1);
-            xor (p4_1, l1, r2);
-            memcpy(l2, r1, sizeof(r1));
-            print("L2", l2, 4);
-            print("R2", r2, 4);
-            printf("\n      *  関数F-2  *\n");
-            function_f(r2, key1, p4_2);
-            xor (p4_2, l2, l3);
-            memcpy(r3, r2, sizeof(r2));
-            print("L3", l3, 4);
-            print("R3", r3, 4);
-            printf("\n\n");
-            // IP-1
-            InitialPermutationInverse(l3, r3, ipInverse);
-            print("復号した暗号文", ipInverse, 8);
-        }
-    
-        for (i = 0; i < 8; i++) {
-            fprintf(outputfile, "%d" ,ipInverse[i]);
-        }
-        printf("\n");
-        fclose(inputfile);
-        fclose(outputfile);
-     */
         return 0;
 }

@@ -38,7 +38,7 @@ int PC_2[8][6] = {
     {16, 7, 27, 20, 13, 2},
     {41, 52, 31, 37, 47, 55},
     {30, 40, 51, 45, 33, 48},
-    {44, 49, 51, 45, 33, 48},
+    {44, 49, 39, 56, 34, 53},
     {46, 42, 50, 36, 29, 32}
 };
 
@@ -106,9 +106,13 @@ void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *
     }
     for(i=0;i<8;i++){
         for(j=0;j<6;j++){
-            subKeyGenerate[i*6+j] = mozi[PC_2[i][j] - 1];
+            subKeyGenerate[6 * i + j] = mozi[PC_2[i][j] - 1];
         }
     }
+    print("outputLeft", outputLeft, 28);
+    print("outputRight", outputRight, 28);
+    print("outputPC2", mozi, 56);
+    print("subKeyGenerate", subKeyGenerate, 48);
 }
 
 
@@ -262,8 +266,9 @@ int main(int argc, const char * argv[]) {
     char key[64];
     char permutedChoice1Left[28], permutedChoice1Right[28];
     char permutedChoice2Left[28], permutedChoice2Right[28];
+    char outputPC2[48];
     
-    password = 8;
+    password = 16;
     
     for (i = 63; 0 <= i; i--) {
         key[i] = password % 2;
@@ -272,10 +277,9 @@ int main(int argc, const char * argv[]) {
     for(i=0;i<64;i++){
         printf("%d", key[i]);
     }
-    PC1(key, permutedChoice1Left, permutedChoice1Right);
-    PC2(0, <#char *inputLeft#>, <#char *inputRight#>, <#char *outputLeft#>, <#char *outputRight#>, <#char *subKeyGenerate#>)
-    
     printf("\n");
+    PC1(key, permutedChoice1Left, permutedChoice1Right);
+    PC2(0, permutedChoice1Left, permutedChoice1Right, permutedChoice2Left, permutedChoice2Right, outputPC2);
     
     /*
     int i, password;

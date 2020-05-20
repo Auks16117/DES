@@ -9,6 +9,8 @@
 #include<stdlib.h>
 #include<string.h>
 
+
+
 int PC_1[7][8] = {
     {57, 49, 41, 33, 25, 17, 9, 1},
     {58, 50, 42, 34, 26, 18, 10, 2},
@@ -119,6 +121,12 @@ int P[8][4] = {
     {22, 11, 4, 25}
 };
 
+struct keys{
+    char keyLeft[28];
+    char keyRight[28];
+    char subKeyGenerate[48];
+};
+
 void print(char *c, char *mozi, int len) {
     int i, c_len;
     c_len = strlen(c);
@@ -177,10 +185,12 @@ void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *
             outputRight[i] = inputRight[i+2];
         }
     }
+    // 左と右を連結する
     for(i=0;i<28;i++){
-        mozi[i] = inputLeft[i];
-        mozi[i + 28] = inputRight[i];
+        mozi[i] = outputLeft[i];
+        mozi[i + 28] = outputRight[i];
     }
+    // PC2の転置表で転置を行う
     for(i=0;i<8;i++){
         for(j=0;j<6;j++){
             subKeyGenerate[6 * i + j] = mozi[PC_2[i][j] - 1];
@@ -190,6 +200,22 @@ void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *
     print("outputRight", outputRight, 28);
     print("outputPC2", mozi, 56);
     print("subKeyGenerate", subKeyGenerate, 48);
+}
+
+void createKeys(char *key,struct keys *subKey){
+    int i;
+    char permutedChoice1Left[28], permutedChoice1Right[28];
+    
+    PC1(key, permutedChoice1Left, permutedChoice1Right);
+
+    for(i=0;i<16;i++){
+        printf("%d\n", i + 1);
+        if(i==0){
+            PC2(i, permutedChoice1Left, permutedChoice1Right, subKey[i].keyLeft, subKey[i].keyRight, subKey[i].subKeyGenerate);
+        }else{
+            PC2(i, subKey[i-1].keyLeft, subKey[i-1].keyRight, subKey[i].keyLeft, subKey[i].keyRight, subKey[i].subKeyGenerate);
+        }
+    }
 }
 
 void ExpansionPermutation(char *ipRight, char *expansionPermutation){
@@ -219,8 +245,16 @@ void InitialPermutation(char *plainText, char *ipLeft, char *ipRight) {
 
 // 2進数から10進数へ変換
 void binaryDemical(char *mozi, int *suti){
-    suti[0] = mozi[0] * 2 + mozi[1];
-    suti[1] = mozi[0] * 8 + mozi[1] * 4 + mozi[2] * 2 + mozi[3];
+    suti[0] = mozi[0] * 2 + mozi[5];
+    suti[1] = mozi[1] * 8 + mozi[2] * 4 + mozi[3] * 2 + mozi[4];
+}
+
+void demicalBinary(int suti, int from, int to, char *mozi){
+    int i;
+    for(i=from;to<=i;i--){
+        mozi[i] = suti % 2;
+        suti = suti / 2;
+    }
 }
 
 // 初期配置の反対の操作(IP-1)
@@ -238,6 +272,7 @@ void InitialPermutationInverse(char *l3, char * r3, char *ipInverse) {
 void function_S(char *outputExpansionPermutation, char *outputS){
     int i, suti[2];
     char moziS[6];
+    print("input", outputExpansionPermutation, 48);
     for(i=0;i<8;i++){
         moziS[0] = outputExpansionPermutation[i*6];
         moziS[1] = outputExpansionPermutation[i*6+1];
@@ -246,30 +281,46 @@ void function_S(char *outputExpansionPermutation, char *outputS){
         moziS[4] = outputExpansionPermutation[i*6+4];
         moziS[5] = outputExpansionPermutation[i*6+5];
         binaryDemical(moziS, suti);
-        
+        print("moziS", moziS, 6);
+        printf("suti= %d %d\n", suti[0], suti[1]);
         switch (i) {
             case 0:
-                outputS[0] = S1[suti[0]][suti[1]];
+                demicalBinary(S1[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
+                printf("table=%d\n", S1[suti[0]][suti[1]]);
                 break;
             case 1:
-                outputS[1] = S2[suti[0]][suti[1]];
+                demicalBinary(S2[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
+                printf("table=%d\n", S2[suti[0]][suti[1]]);
                 break;
             case 2:
-                outputS[2] = S3[suti[0]][suti[1]];
+                demicalBinary(S3[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
+                printf("table=%d\n", S3[suti[0]][suti[1]]);
                 break;
             case 3:
-                outputS[3] = S4[suti[0]][suti[1]];
+                demicalBinary(S4[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
+                printf("table=%d\n", S4[suti[0]][suti[1]]);
                 break;
             case 4:
-                outputS[4] = S5[suti[0]][suti[1]];
+                demicalBinary(S5[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
+                printf("table=%d\n", S5[suti[0]][suti[1]]);
                 break;
             case 5:
-                outputS[5] = S6[suti[0]][suti[1]];
+                demicalBinary(S6[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
+                printf("table=%d\n", S6[suti[0]][suti[1]]);
+                break;
+            case 6:
+                demicalBinary(S7[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
+                printf("table=%d\n", S7[suti[0]][suti[1]]);
+                break;
+            case 7:
+                demicalBinary(S8[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
+                printf("table=%d\n", S8[suti[0]][suti[1]]);
+                break;
             default:
                 break;
         }
-        
     }
+    print("outputS", outputS, 32);
 }
 
 void proccessingP(char *input, char *output){
@@ -289,7 +340,7 @@ void function_f(char *key, char *ipRight) {
 
     // 拡大転置 (E/P:Expansion Permutation)
     ExpansionPermutation(ipRight, outputExpansionPermutation);
-    print("拡大転置(E/P)", outputExpansionPermutation, 8);
+    print("拡大転置(E/P)", outputExpansionPermutation, 48);
     // XORする
     for (i = 0; i < 48; i++) {
         outputExpansionPermutation[i] = outputExpansionPermutation[i] ^ key[i];
@@ -313,9 +364,8 @@ int main(int argc, const char * argv[]) {
     char key[64];
     char ipLeft[32], ipRight[32];
     char plainText[64];
-    char permutedChoice1Left[28], permutedChoice1Right[28];
-    char permutedChoice2Left[28], permutedChoice2Right[28];
-    char outputPC2[48];
+    struct keys subKeys[16];
+    char outputS;
     
     password = 16;
     
@@ -323,14 +373,25 @@ int main(int argc, const char * argv[]) {
         key[i] = password % 2;
         password = password / 2;
     }
+    
     print("key", key, 64);
-    PC1(key, permutedChoice1Left, permutedChoice1Right);
+    //createKeys(key, subKeys);
+    
     InitialPermutation(plainText, ipLeft, ipRight);
-    /*
-    for(k = 0;k < 16;k++){
-        PC2(0, permutedChoice1Left, permutedChoice1Right, permutedChoice2Left, permutedChoice2Right, outputPC2);
+    
+    int suti10 = 128;
+    char test1[48], test2[36];
+    for (i = 47; 0 <= i; i--) {
+           test1[i] = suti10 % 2;
+           suti10 = suti10 / 2;
+       }
+    function_S(test1, test2);
+    
+    
+    
+    for(i=0;i<16;i++){
         
     }
-    */
+     
     return 0;
 }

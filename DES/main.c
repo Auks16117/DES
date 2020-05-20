@@ -235,14 +235,6 @@ void InitialPermutationInverse(char *l3, char * r3, char *ipInverse) {
     ipInverse[7] = r3[1];
 }
 
-// 転置(P4:Permutation)
-void Permutation(char *sbox_output, char *p4) {
-    p4[0] = sbox_output[1];
-    p4[1] = sbox_output[3];
-    p4[2] = sbox_output[2];
-    p4[3] = sbox_output[0];
-}
-
 void function_S(char *outputExpansionPermutation, char *outputS){
     int i, suti[2];
     char moziS[6];
@@ -317,7 +309,7 @@ void xor(char *sbox_output, char *l, char *output) {
 }
 
 int main(int argc, const char * argv[]) {
-    int i, j, k, password;
+    int i, k, password;
     char key[64];
     char ipLeft[32], ipRight[32];
     char plainText[64];
@@ -331,18 +323,14 @@ int main(int argc, const char * argv[]) {
         key[i] = password % 2;
         password = password / 2;
     }
-    for(i=0;i<64;i++){
-        printf("%d", key[i]);
-    }
-    printf("\n");
+    print("key", key, 64);
     PC1(key, permutedChoice1Left, permutedChoice1Right);
     InitialPermutation(plainText, ipLeft, ipRight);
-    
+    /*
     for(k = 0;k < 16;k++){
         PC2(0, permutedChoice1Left, permutedChoice1Right, permutedChoice2Left, permutedChoice2Right, outputPC2);
         
     }
-    
-    
-        return 0;
+    */
+    return 0;
 }

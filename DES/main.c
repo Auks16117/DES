@@ -196,10 +196,12 @@ void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *
             subKeyGenerate[6 * i + j] = mozi[PC_2[i][j] - 1];
         }
     }
+    /*
     print("outputLeft", outputLeft, 28);
     print("outputRight", outputRight, 28);
     print("outputPC2", mozi, 56);
     print("subKeyGenerate", subKeyGenerate, 48);
+     */
 }
 
 void createKeys(char *key,struct keys *subKey){
@@ -207,9 +209,7 @@ void createKeys(char *key,struct keys *subKey){
     char permutedChoice1Left[28], permutedChoice1Right[28];
     
     PC1(key, permutedChoice1Left, permutedChoice1Right);
-
     for(i=0;i<16;i++){
-        printf("%d\n", i + 1);
         if(i==0){
             PC2(i, permutedChoice1Left, permutedChoice1Right, subKey[i].keyLeft, subKey[i].keyRight, subKey[i].subKeyGenerate);
         }else{
@@ -234,9 +234,10 @@ void InitialPermutation(char *plainText, char *ipLeft, char *ipRight) {
     char ip[64];
     for(i=0;i<8;i++){
         for(j=0;j<8;j++){
-            ip[6 * i + j] = plainText[ETable[i][j] - 1];
+            ip[8 * i + j] = plainText[InitialPermutationTable[i][j] - 1];
         }
     }
+    print("ip", ip, 64);
     for(i = 0; i < 32; i++){
         ipLeft[i] = ip[i];
         ipRight[i] = ip[i + 32];
@@ -281,46 +282,35 @@ void function_S(char *outputExpansionPermutation, char *outputS){
         moziS[4] = outputExpansionPermutation[i*6+4];
         moziS[5] = outputExpansionPermutation[i*6+5];
         binaryDemical(moziS, suti);
-        print("moziS", moziS, 6);
-        printf("suti= %d %d\n", suti[0], suti[1]);
         switch (i) {
             case 0:
                 demicalBinary(S1[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
-                printf("table=%d\n", S1[suti[0]][suti[1]]);
                 break;
             case 1:
                 demicalBinary(S2[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
-                printf("table=%d\n", S2[suti[0]][suti[1]]);
                 break;
             case 2:
                 demicalBinary(S3[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
-                printf("table=%d\n", S3[suti[0]][suti[1]]);
                 break;
             case 3:
                 demicalBinary(S4[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
-                printf("table=%d\n", S4[suti[0]][suti[1]]);
                 break;
             case 4:
                 demicalBinary(S5[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
-                printf("table=%d\n", S5[suti[0]][suti[1]]);
                 break;
             case 5:
                 demicalBinary(S6[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
-                printf("table=%d\n", S6[suti[0]][suti[1]]);
                 break;
             case 6:
                 demicalBinary(S7[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
-                printf("table=%d\n", S7[suti[0]][suti[1]]);
                 break;
             case 7:
                 demicalBinary(S8[suti[0]][suti[1]], i * 4 + 3, i * 4, outputS);
-                printf("table=%d\n", S8[suti[0]][suti[1]]);
                 break;
             default:
                 break;
         }
     }
-    print("outputS", outputS, 32);
 }
 
 void proccessingP(char *input, char *output){
@@ -333,21 +323,23 @@ void proccessingP(char *input, char *output){
 }
 
 // 関数F
-void function_f(char *key, char *ipRight) {
+void function_f(char *key, char *ipRight, char *outputF) {
     int i;
     char outputExpansionPermutation[48];
-    char outputP[32], outputS[6];
+    char outputS[32];
 
     // 拡大転置 (E/P:Expansion Permutation)
     ExpansionPermutation(ipRight, outputExpansionPermutation);
     print("拡大転置(E/P)", outputExpansionPermutation, 48);
+    print("key", key, 48);
     // XORする
     for (i = 0; i < 48; i++) {
         outputExpansionPermutation[i] = outputExpansionPermutation[i] ^ key[i];
     }
     print("XOR", outputExpansionPermutation, 48);
     function_S(outputExpansionPermutation, outputS);
-    proccessingP(outputS, outputP);
+    print("outputS", outputS, 32);
+    proccessingP(outputS, outputF);
 }
 
 // XOR関数
@@ -366,6 +358,7 @@ int main(int argc, const char * argv[]) {
     char plainText[64];
     struct keys subKeys[16];
     char outputS;
+    char outputF[32];
     
     password = 16;
     
@@ -375,23 +368,24 @@ int main(int argc, const char * argv[]) {
     }
     
     print("key", key, 64);
-    //createKeys(key, subKeys);
+    createKeys(key, subKeys);
     
+    
+    
+    int suti1 = 8;
+    for (i = 63; 0 <= i; i--) {
+        plainText[i] = suti1 % 2;
+        suti1 = suti1 / 2;
+    }
     InitialPermutation(plainText, ipLeft, ipRight);
-    
-    int suti10 = 128;
-    char test1[48], test2[36];
-    for (i = 47; 0 <= i; i--) {
-           test1[i] = suti10 % 2;
-           suti10 = suti10 / 2;
-       }
-    function_S(test1, test2);
-    
-    
-    
+    print("ipLeft", ipLeft, 32);
+    print("ipRight", ipRight, 32);
+    function_f(subKeys[0].subKeyGenerate, ipRight, outputF);
     for(i=0;i<16;i++){
         
     }
      
     return 0;
 }
+
+// F関数のテスト

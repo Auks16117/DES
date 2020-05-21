@@ -121,6 +121,17 @@ int P[8][4] = {
     {22, 11, 4, 25}
 };
 
+int IP_1[8][8] = {
+    {40, 8, 48, 16, 56, 24, 64, 32},
+    {39, 7, 47, 15, 55, 23, 63, 31},
+    {38, 6, 46, 14, 54, 22, 62, 30},
+    {37, 5, 45, 13, 53, 21, 61, 29},
+    {36, 4, 44, 12, 52, 20, 60, 28},
+    {35, 3, 43, 11, 51, 19, 59, 27},
+    {34, 2, 42, 10, 50, 18, 58, 26},
+    {33, 1, 41,  9, 49, 17, 57, 25}
+};
+
 struct keys{
     char keyLeft[28];
     char keyRight[28];
@@ -270,6 +281,7 @@ void InitialPermutationInverse(char *l3, char * r3, char *ipInverse) {
     ipInverse[7] = r3[1];
 }
 
+// 関数S
 void function_S(char *outputExpansionPermutation, char *outputS){
     int i, suti[2];
     char moziS[6];
@@ -330,24 +342,20 @@ void function_f(char *key, char *ipRight, char *outputF) {
 
     // 拡大転置 (E/P:Expansion Permutation)
     ExpansionPermutation(ipRight, outputExpansionPermutation);
-    print("拡大転置(E/P)", outputExpansionPermutation, 48);
-    print("key", key, 48);
     // XORする
     for (i = 0; i < 48; i++) {
         outputExpansionPermutation[i] = outputExpansionPermutation[i] ^ key[i];
     }
-    print("XOR", outputExpansionPermutation, 48);
     function_S(outputExpansionPermutation, outputS);
-    print("outputS", outputS, 32);
     proccessingP(outputS, outputF);
 }
 
-// XOR関数
-void xor(char *sbox_output, char *l, char *output) {
-    int i;
-
-    for (i = 0; i < 4; i++) {
-        output[i] = sbox_output[i] ^ l[i];
+void InverseInitialPermutation(char *input, char *output){
+    int i, j;
+    for(i = 0;i < 8;i++){
+        for(j = 0;j < 8;j++){
+            output[8 * i + j] = input[IP_1[i][j] - 1];
+        }
     }
 }
 
@@ -355,10 +363,11 @@ int main(int argc, const char * argv[]) {
     int i, k, password;
     char key[64];
     char ipLeft[32], ipRight[32];
-    char plainText[64];
+    char plainText[64], text[64];
     struct keys subKeys[16];
-    char outputS;
+    char outputXor[32];
     char outputF[32];
+    char output[64];
     
     password = 16;
     
@@ -370,21 +379,40 @@ int main(int argc, const char * argv[]) {
     print("key", key, 64);
     createKeys(key, subKeys);
     
-    
-    
-    int suti1 = 8;
+    int suti1 = 16;
     for (i = 63; 0 <= i; i--) {
         plainText[i] = suti1 % 2;
         suti1 = suti1 / 2;
     }
     InitialPermutation(plainText, ipLeft, ipRight);
-    print("ipLeft", ipLeft, 32);
-    print("ipRight", ipRight, 32);
-    function_f(subKeys[0].subKeyGenerate, ipRight, outputF);
     for(i=0;i<16;i++){
-        
+        // 右側にF関数を実行
+        function_f(subKeys[0].subKeyGenerate, ipRight, outputF);
+        print("10", ipLeft, 32);
+        print("11", outputF, 32);
+        // LとF関数の出力で排他的論理和をとる
+        for(k=0;k<32;k++){
+            outputXor[k] = ipLeft[k] ^ outputF[k];
+        }
+        print("outputXor", outputXor, 32);
+        print("ipLeft", ipLeft, 32);
+        print("ipRight", ipRight, 32);
+        // 左と右を入れ替える
+        for(k=0;k<32;k++){
+            ipLeft[k] = ipRight[k];
+            ipRight[k] = outputXor[k];
+        }
+        print("ipLeft", ipLeft, 32);
+        print("ipRight", ipRight, 32);
     }
-     
+    for(i=0;i<32;i++){
+        text[i] = ipLeft[i];
+        text[i+32] = ipRight[i];
+    }
+    InverseInitialPermutation(text, output);
+    
+    
+    
     return 0;
 }
 

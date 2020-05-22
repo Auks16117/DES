@@ -164,7 +164,6 @@ void PC1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
             permutedChoice[8 * i + j] = inputKey[PC_1[i][j] - 1];
         }
     }
-    print("PC1", permutedChoice, 56);
     for(i=0;i<56;i++){
         if(i < 28){
             permutedChoiceLeft[i] = permutedChoice[i];
@@ -172,8 +171,6 @@ void PC1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
             permutedChoiceRight[i - 28] = permutedChoice[i];
         }
     }
-    print("PC1 Left", permutedChoiceLeft, 28);
-    print("PC1 Right", permutedChoiceRight, 28);
 }
 
 // PC2 正しく動くことを確認
@@ -209,12 +206,6 @@ void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *
             subKeyGenerate[6 * i + j] = mozi[PC_2[i][j] - 1];
         }
     }
-    /*
-    print("outputLeft", outputLeft, 28);
-    print("outputRight", outputRight, 28);*/
-    printf("%d:",number);
-    print("outputPC2", mozi, 56);
-    print("subKeyGenerate", subKeyGenerate, 48);
 }
 
 // 正しく動くことを確認
@@ -251,14 +242,10 @@ void InitialPermutation(char *plainText, char *ipLeft, char *ipRight) {
             ip[8 * i + j] = plainText[InitialPermutationTable[i][j] - 1];
         }
     }
-    print("plainText", plainText, 64);
-    print("ip", ip, 64);
     for(i = 0; i < 32; i++){
         ipLeft[i] = ip[i];
         ipRight[i] = ip[i + 32];
     }
-    print("ipLeft", ipLeft, 32);
-    print("ipRight", ipRight, 32);
 }
 
 // 2進数から10進数へ変換
@@ -287,7 +274,6 @@ void function_S(char *outputExpansionPermutation, char *outputS){
         moziS[3] = outputExpansionPermutation[i*6+3];
         moziS[4] = outputExpansionPermutation[i*6+4];
         moziS[5] = outputExpansionPermutation[i*6+5];
-        print("moziS", moziS, 6);
         binaryDemical(moziS, suti);
         switch (i) {
             case 0:
@@ -335,16 +321,12 @@ void function_f(char *key, char *ipRight, char *outputF) {
     char outputExpansionPermutation[48];
     char outputS[32];
 
-    print("ipRight",ipRight,32);
     // 拡大転置 (E/P:Expansion Permutation)
     ExpansionPermutation(ipRight, outputExpansionPermutation);
-    print("E/P",outputExpansionPermutation,48);
     // XORする
     for (i = 0; i < 48; i++) {
         outputExpansionPermutation[i] = outputExpansionPermutation[i] ^ key[i];
     }
-    print("key", key, 48);
-    print("XOR", outputExpansionPermutation, 48);
     function_S(outputExpansionPermutation, outputS);
     proccessingP(outputS, outputF);
 }
@@ -416,20 +398,20 @@ int main(int argc, const char * argv[]) {
         printf("Couldn't open %s\n", argv[4]);
         exit(EXIT_FAILURE);
     }
-    
+    print("plainText",plainText,64);
     print("key", key, 64);
-    createKeys(key, subKeys); // 確認中
+    createKeys(key, subKeys);
     InitialPermutation(plainText, ipLeft, ipRight);
+    // 確認中
     if(strcmp("enc", mode) == 0){
-        for(i=0;i<15;i++){
-            printf("\n%d\n", i);
+        for(i=0;i<16;i++){
             // 右側にF関数を実行
             function_f(subKeys[i].subKeyGenerate, ipRight, outputF);
             // LとF関数の出力で排他的論理和をとる
             for(k=0;k<32;k++){
                 outputXor[k] = ipLeft[k] ^ outputF[k];
             }
-            if(i != 14){
+            if(i != 15){
                 // 左と右を入れ替える
                 for(k=0;k<32;k++){
                     ipLeft[k] = ipRight[k];
@@ -457,7 +439,7 @@ int main(int argc, const char * argv[]) {
     }
     // 左右を連結
     for(i=0;i<32;i++){
-        text[i] = ipLeft[i];
+        text[i] = outputXor[i];
         text[i+32] = ipRight[i];
     }
     // InverseInitialPermutationを実行
@@ -466,7 +448,6 @@ int main(int argc, const char * argv[]) {
     for (i = 0; i < 64; i++) {
         fprintf(outputfile, "%d" ,output[i]);
     }
-    printf("\n");
     fclose(inputfile);
     fclose(outputfile);
     

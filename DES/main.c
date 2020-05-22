@@ -132,14 +132,16 @@ int IP_1[8][8] = {
     {33, 1, 41,  9, 49, 17, 57, 25}
 };
 
+// サブ鍵を作るための構造体
 struct keys{
-    char keyLeft[28];
-    char keyRight[28];
-    char subKeyGenerate[48];
+    char keyLeft[28]; // 鍵の左
+    char keyRight[28]; // 鍵の右
+    char subKeyGenerate[48]; // サブ鍵
 };
 
 void print(char *c, char *mozi, int len) {
-    int i, c_len;
+    int i;
+    unsigned long int c_len;
     c_len = strlen(c);
     printf("%s:", c);
     for (i = 0; i < 20 - c_len; i++) {
@@ -213,16 +215,20 @@ void createKeys(char *key,struct keys *subKey){
     int i;
     char permutedChoice1Left[28], permutedChoice1Right[28];
     
+    // PC1を実行する
     PC1(key, permutedChoice1Left, permutedChoice1Right);
     for(i=0;i<16;i++){
         if(i==0){
+            // 最初はPC1で作った左右の値を使う
             PC2(i, permutedChoice1Left, permutedChoice1Right, subKey[i].keyLeft, subKey[i].keyRight, subKey[i].subKeyGenerate);
         }else{
+            // 2回目以降は1つ前の左右の値を使う
             PC2(i, subKey[i-1].keyLeft, subKey[i-1].keyRight, subKey[i].keyLeft, subKey[i].keyRight, subKey[i].subKeyGenerate);
         }
     }
 }
 
+// 拡大転置(E/P)
 void ExpansionPermutation(char *ipRight, char *expansionPermutation){
     int i, j;
     for(i=0;i<8;i++){
@@ -306,6 +312,7 @@ void function_S(char *outputExpansionPermutation, char *outputS){
     }
 }
 
+// P処理
 void proccessingP(char *input, char *output){
     int i, j;
     for(i = 0;i < 8;i++){
@@ -321,13 +328,15 @@ void function_f(char *key, char *ipRight, char *outputF) {
     char outputExpansionPermutation[48];
     char outputS[32];
 
-    // 拡大転置 (E/P:Expansion Permutation)
+    // 拡大転置を行う
     ExpansionPermutation(ipRight, outputExpansionPermutation);
     // XORする
     for (i = 0; i < 48; i++) {
         outputExpansionPermutation[i] = outputExpansionPermutation[i] ^ key[i];
     }
+    // 関数Sを行う
     function_S(outputExpansionPermutation, outputS);
+    // P処理を実行
     proccessingP(outputS, outputF);
 }
 
@@ -342,7 +351,8 @@ void InverseInitialPermutation(char *input, char *output){
 
 
 int main(int argc, const char * argv[]) {
-    int i, k, password;
+    int i, k;
+    unsigned long int password;
     int j = 0;
     char key[64];
     char ipLeft[32], ipRight[32];
@@ -400,43 +410,31 @@ int main(int argc, const char * argv[]) {
     }
     print("plainText",plainText,64);
     print("key", key, 64);
-    createKeys(key, subKeys);
-    InitialPermutation(plainText, ipLeft, ipRight);
-    // 確認中
-    if(strcmp("enc", mode) == 0){
-        for(i=0;i<16;i++){
-            // 右側にF関数を実行
+    createKeys(key, subKeys); // サブ鍵生成
+    InitialPermutation(plainText, ipLeft, ipRight); // 初期転置を行う
+    
+    // ラウンド16まで繰り返す
+    for(i=0;i<16;i++){
+        // 右側にF関数を実行
+        if(strcmp("enc", mode) == 0){
             function_f(subKeys[i].subKeyGenerate, ipRight, outputF);
-            // LとF関数の出力で排他的論理和をとる
+        }else{
+            function_f(subKeys[15-i].subKeyGenerate, ipRight, outputF);
+        }
+        // LとF関数の出力で排他的論理和をとる
+        for(k=0;k<32;k++){
+            outputXor[k] = ipLeft[k] ^ outputF[k];
+        }
+        // 最後は左右入れ替えない
+        if(i != 15){
+            // 左と右を入れ替える
             for(k=0;k<32;k++){
-                outputXor[k] = ipLeft[k] ^ outputF[k];
-            }
-            if(i != 15){
-                // 左と右を入れ替える
-                for(k=0;k<32;k++){
-                    ipLeft[k] = ipRight[k];
-                    ipRight[k] = outputXor[k];
-                }
+                ipLeft[k] = ipRight[k];
+                ipRight[k] = outputXor[k];
             }
         }
-    }else{
-        for(i=15;i>=0;i--){
-            // 右側にF関数を実行
-            function_f(subKeys[i].subKeyGenerate, ipRight, outputF);
-            // LとF関数の出力で排他的論理和をとる
-            for(k=0;k<32;k++){
-                outputXor[k] = ipLeft[k] ^ outputF[k];
-            }
-            if(i != 0){
-                // 左と右を入れ替える
-                for(k=0;k<32;k++){
-                    ipLeft[k] = ipRight[k];
-                    ipRight[k] = outputXor[k];
-                }
-            }
-        }
-        
     }
+    
     // 左右を連結
     for(i=0;i<32;i++){
         text[i] = outputXor[i];

@@ -33,7 +33,7 @@ int PC_2[8][6] = {
 };
 
 int InitialPermutationTable[8][8] = {
-    {58, 50, 42, 34, 26, 28, 10, 2},
+    {58, 50, 42, 34, 26, 18, 10, 2},
     {60, 52, 44, 36, 28, 20, 12, 4},
     {62, 54, 46, 38, 30, 22, 14, 6},
     {64, 56, 48, 40, 32, 24, 16, 8},
@@ -113,7 +113,7 @@ int S8[4][16] = {
 int P[8][4] = {
     {16, 7, 20, 21},
     {29, 12, 28, 17},
-    {1, 18, 31, 10},
+    {1, 15, 23, 26},
     {5, 18, 31, 10},
     {2, 8, 24, 14},
     {32, 27, 3, 9},
@@ -154,6 +154,7 @@ void print(char *c, char *mozi, int len) {
     printf("\n");
 }
 
+// PC-1 正しく動く
 void PC1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
     int i, j;
     char permutedChoice[56];
@@ -175,6 +176,7 @@ void PC1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
     print("PC1 Right", permutedChoiceRight, 28);
 }
 
+// PC2 正しく動くことを確認
 void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *outputRight, char *subKeyGenerate){
     int i, j;
     char mozi[56];
@@ -209,12 +211,13 @@ void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *
     }
     /*
     print("outputLeft", outputLeft, 28);
-    print("outputRight", outputRight, 28);
+    print("outputRight", outputRight, 28);*/
+    printf("%d:",number);
     print("outputPC2", mozi, 56);
     print("subKeyGenerate", subKeyGenerate, 48);
-     */
 }
 
+// 正しく動くことを確認
 void createKeys(char *key,struct keys *subKey){
     int i;
     char permutedChoice1Left[28], permutedChoice1Right[28];
@@ -248,11 +251,14 @@ void InitialPermutation(char *plainText, char *ipLeft, char *ipRight) {
             ip[8 * i + j] = plainText[InitialPermutationTable[i][j] - 1];
         }
     }
+    print("plainText", plainText, 64);
     print("ip", ip, 64);
     for(i = 0; i < 32; i++){
         ipLeft[i] = ip[i];
         ipRight[i] = ip[i + 32];
     }
+    print("ipLeft", ipLeft, 32);
+    print("ipRight", ipRight, 32);
 }
 
 // 2進数から10進数へ変換
@@ -261,6 +267,7 @@ void binaryDemical(char *mozi, int *suti){
     suti[1] = mozi[1] * 8 + mozi[2] * 4 + mozi[3] * 2 + mozi[4];
 }
 
+// 10進数から2進数へ
 void demicalBinary(int suti, int from, int to, char *mozi){
     int i;
     for(i=from;to<=i;i--){
@@ -269,23 +276,10 @@ void demicalBinary(int suti, int from, int to, char *mozi){
     }
 }
 
-// 初期配置の反対の操作(IP-1)
-void InitialPermutationInverse(char *l3, char * r3, char *ipInverse) {
-    ipInverse[0] = l3[3];
-    ipInverse[1] = l3[0];
-    ipInverse[2] = l3[2];
-    ipInverse[3] = r3[0];
-    ipInverse[4] = r3[2];
-    ipInverse[5] = l3[1];
-    ipInverse[6] = r3[3];
-    ipInverse[7] = r3[1];
-}
-
 // 関数S
 void function_S(char *outputExpansionPermutation, char *outputS){
     int i, suti[2];
     char moziS[6];
-    print("input", outputExpansionPermutation, 48);
     for(i=0;i<8;i++){
         moziS[0] = outputExpansionPermutation[i*6];
         moziS[1] = outputExpansionPermutation[i*6+1];
@@ -293,6 +287,7 @@ void function_S(char *outputExpansionPermutation, char *outputS){
         moziS[3] = outputExpansionPermutation[i*6+3];
         moziS[4] = outputExpansionPermutation[i*6+4];
         moziS[5] = outputExpansionPermutation[i*6+5];
+        print("moziS", moziS, 6);
         binaryDemical(moziS, suti);
         switch (i) {
             case 0:
@@ -340,12 +335,16 @@ void function_f(char *key, char *ipRight, char *outputF) {
     char outputExpansionPermutation[48];
     char outputS[32];
 
+    print("ipRight",ipRight,32);
     // 拡大転置 (E/P:Expansion Permutation)
     ExpansionPermutation(ipRight, outputExpansionPermutation);
+    print("E/P",outputExpansionPermutation,48);
     // XORする
     for (i = 0; i < 48; i++) {
         outputExpansionPermutation[i] = outputExpansionPermutation[i] ^ key[i];
     }
+    print("key", key, 48);
+    print("XOR", outputExpansionPermutation, 48);
     function_S(outputExpansionPermutation, outputS);
     proccessingP(outputS, outputF);
 }
@@ -359,61 +358,117 @@ void InverseInitialPermutation(char *input, char *output){
     }
 }
 
+
 int main(int argc, const char * argv[]) {
     int i, k, password;
+    int j = 0;
     char key[64];
     char ipLeft[32], ipRight[32];
     char plainText[64], text[64];
+    char mode[4], chr;
     struct keys subKeys[16];
     char outputXor[32];
     char outputF[32];
     char output[64];
+    FILE *inputfile = NULL;
+    FILE *outputfile = NULL;
     
-    password = 16;
+    // 引数が足りないときは終了する
+    if (argc <= 4) {
+        printf("引数が足りません\n");
+        exit(EXIT_FAILURE);
+    }
     
+    // encかdecのどちらでもない場合終了する
+    memcpy(mode, argv[1], sizeof(mode));
+    if (strcmp("enc", mode) != 0 && strcmp("dec", mode) != 0) {
+        printf("encでもdecでもありません\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    // 鍵を2進数にする
+    password = atoi(argv[2]);
     for (i = 63; 0 <= i; i--) {
         key[i] = password % 2;
         password = password / 2;
     }
     
-    print("key", key, 64);
-    createKeys(key, subKeys);
+    // 入力用ファイルを開く
+    inputfile = fopen(argv[3], "r");
+    if (inputfile == NULL) {
+        printf("Couldn't open %s\n", argv[3]);
+        exit(EXIT_FAILURE);
+    }
+    // テキストを取り出す
+    while ((chr = fgetc(inputfile)) != EOF) {
+        if (chr == '0') {
+            plainText[j] = 0;
+        }
+        else {
+            plainText[j] = 1;
+        }
+        j++;
+    }
     
-    int suti1 = 16;
-    for (i = 63; 0 <= i; i--) {
-        plainText[i] = suti1 % 2;
-        suti1 = suti1 / 2;
+    // 出力用ファイルを開く
+    outputfile = fopen(argv[4], "w");
+    if (outputfile == NULL) {
+        printf("Couldn't open %s\n", argv[4]);
+        exit(EXIT_FAILURE);
     }
+    
+    print("key", key, 64);
+    createKeys(key, subKeys); // 確認中
     InitialPermutation(plainText, ipLeft, ipRight);
-    for(i=0;i<16;i++){
-        // 右側にF関数を実行
-        function_f(subKeys[0].subKeyGenerate, ipRight, outputF);
-        print("10", ipLeft, 32);
-        print("11", outputF, 32);
-        // LとF関数の出力で排他的論理和をとる
-        for(k=0;k<32;k++){
-            outputXor[k] = ipLeft[k] ^ outputF[k];
+    if(strcmp("enc", mode) == 0){
+        for(i=0;i<15;i++){
+            printf("\n%d\n", i);
+            // 右側にF関数を実行
+            function_f(subKeys[i].subKeyGenerate, ipRight, outputF);
+            // LとF関数の出力で排他的論理和をとる
+            for(k=0;k<32;k++){
+                outputXor[k] = ipLeft[k] ^ outputF[k];
+            }
+            if(i != 14){
+                // 左と右を入れ替える
+                for(k=0;k<32;k++){
+                    ipLeft[k] = ipRight[k];
+                    ipRight[k] = outputXor[k];
+                }
+            }
         }
-        print("outputXor", outputXor, 32);
-        print("ipLeft", ipLeft, 32);
-        print("ipRight", ipRight, 32);
-        // 左と右を入れ替える
-        for(k=0;k<32;k++){
-            ipLeft[k] = ipRight[k];
-            ipRight[k] = outputXor[k];
+    }else{
+        for(i=15;i>=0;i--){
+            // 右側にF関数を実行
+            function_f(subKeys[i].subKeyGenerate, ipRight, outputF);
+            // LとF関数の出力で排他的論理和をとる
+            for(k=0;k<32;k++){
+                outputXor[k] = ipLeft[k] ^ outputF[k];
+            }
+            if(i != 0){
+                // 左と右を入れ替える
+                for(k=0;k<32;k++){
+                    ipLeft[k] = ipRight[k];
+                    ipRight[k] = outputXor[k];
+                }
+            }
         }
-        print("ipLeft", ipLeft, 32);
-        print("ipRight", ipRight, 32);
+        
     }
+    // 左右を連結
     for(i=0;i<32;i++){
         text[i] = ipLeft[i];
         text[i+32] = ipRight[i];
     }
+    // InverseInitialPermutationを実行
     InverseInitialPermutation(text, output);
-    
-    
+    print("output", output, 64);
+    for (i = 0; i < 64; i++) {
+        fprintf(outputfile, "%d" ,output[i]);
+    }
+    printf("\n");
+    fclose(inputfile);
+    fclose(outputfile);
     
     return 0;
 }
-
-// F関数のテスト

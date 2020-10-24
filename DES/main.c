@@ -132,9 +132,9 @@ int IP_1[8][8] = {
 
 // structure: create subKey
 struct keys{
-    char keyLeft[28]; // 鍵の左
-    char keyRight[28]; // 鍵の右
-    char subKeyGenerate[48]; // サブ鍵
+    char keyLeft[28]; // key:left
+    char keyRight[28]; // key:right
+    char subKeyGenerate[48]; // subkey
 };
 
 // function print
@@ -178,7 +178,7 @@ void PC1(char *inputKey, char *permutedChoiceLeft, char *permutedChoiceRight){
 void PC2(int number, char *inputLeft, char *inputRight, char *outputLeft, char *outputRight, char *subKeyGenerate){
     int i, j;
     char mozi[56];
-    // 1,2,9,16番目で1シフト(i=0から始まるためそれぞれ-1にする)
+    // shift 1: number1, 2, 9, 16 (start i=0, i-1)
     if(number == 0 || number == 1 || number == 8 || number == 15){
         outputLeft[27] = inputLeft[0];
         outputRight[27] = inputRight[0];
@@ -214,14 +214,12 @@ void createKeys(char *key,struct keys *subKey){
     int i;
     char permutedChoice1Left[28], permutedChoice1Right[28];
     
-    // PC1を実行する
+    // PC1
     PC1(key, permutedChoice1Left, permutedChoice1Right);
     for(i=0;i<16;i++){
         if(i==0){
-            // 最初はPC1で作った左右の値を使う
             PC2(i, permutedChoice1Left, permutedChoice1Right, subKey[i].keyLeft, subKey[i].keyRight, subKey[i].subKeyGenerate);
         }else{
-            // 2回目以降は1つ前の左右の値を使う
             PC2(i, subKey[i-1].keyLeft, subKey[i-1].keyRight, subKey[i].keyLeft, subKey[i].keyRight, subKey[i].subKeyGenerate);
         }
     }
@@ -410,8 +408,8 @@ int main(int argc, const char * argv[]) {
     }
     print("plainText",plainText,64);
     print("key", key, 64);
-    createKeys(key, subKeys); // サブ鍵生成
-    InitialPermutation(plainText, ipLeft, ipRight); // 初期転置を行う
+    createKeys(key, subKeys); // create key
+    InitialPermutation(plainText, ipLeft, ipRight); // IP
     
     // to round16
     for(i=0;i<16;i++){
